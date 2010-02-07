@@ -298,25 +298,46 @@ describe 'select input' do
     end
   end
 
-  describe 'when :selected is set' do
+  describe ':selected option' do
     before do
       @output_buffer = ''
     end
 
-    describe "no selected items" do
-      before do
-        @new_post.stub!(:author_id).and_return(nil)
-        semantic_form_for(@new_post) do |builder|
-          concat(builder.input(:author, :as => :select, :selected => nil))
+    describe "nil" do
+      
+      describe "and the attribute is also nil" do
+      
+        before do
+          @new_post.stub!(:author).and_return(nil)
+          semantic_form_for(@new_post) do |builder|
+            concat(builder.input(:author, :as => :select, :selected => nil))
+          end
         end
+        
+        it 'should not have any selected item(s)' do
+          output_buffer.should_not have_tag("form li select option[@selected='selected']")
+        end
+        
       end
-
-      it 'should not have any selected item(s)' do
-        output_buffer.should_not have_tag("form li select option[@selected='selected']")
+      
+      describe "and the attribute has a value" do
+      
+        before do
+          @new_post.stub!(:author).and_return(@bob)
+          semantic_form_for(@new_post) do |builder|
+            concat(builder.input(:author, :as => :select, :selected => nil))
+          end
+        end
+        
+        it 'should not have any selected item(s) - nil means don\'t select anything' do
+          output_buffer.should_not have_tag("form li select option[@selected='selected']")
+        end
+        
       end
+      
     end
 
-    describe "single selected item" do
+    describe "single value" do
       before do
         @new_post.stub!(:author_id).and_return(nil)
         semantic_form_for(@new_post) do |builder|
@@ -324,16 +345,16 @@ describe 'select input' do
         end
       end
 
-      it 'should have a selected item; the specified one' do
+      it 'should select the option with the same value' do
         output_buffer.should have_tag("form li select option[@selected='selected']", :count => 1)
         output_buffer.should have_tag("form li select option[@selected='selected']", /bob/i)
         output_buffer.should have_tag("form li select option[@selected='selected'][@value='#{@bob.id}']")
       end
     end
 
-    describe "multiple selected items" do
+    describe "array of values" do
 
-      describe "when :multiple => false" do
+      describe "with :multiple => false" do
         before do
           @new_post.stub!(:author_ids).and_return(nil)
           
@@ -350,7 +371,7 @@ describe 'select input' do
         end
       end
 
-      describe "when :multiple => true" do
+      describe "with :multiple => true" do
         before do
           @new_post.stub!(:author_ids).and_return(nil)
 
