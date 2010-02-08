@@ -503,7 +503,7 @@ module Formtastic #:nodoc:
       #
       def strip_formtastic_options(options) #:nodoc:
         options.except(:value_method, :label_method, :collection, :required, :label,
-                       :as, :hint, :input_html, :label_html, :value_as_class)
+                       :as, :hint, :input_html, :label_html, :value_as_class, :prompt)
       end
 
       # Determins if the attribute (eg :title) should be considered required or not.
@@ -699,18 +699,35 @@ module Formtastic #:nodoc:
       #   f.input :author, :group_by => :continents, :group_label_method => :something_different
       #
       def select_input(method, options)
-        html_options = options.delete(:input_html) || {}
+        if options.key?(:selected)
+          ::ActiveSupport::Deprecation.warn(":selected is deprecated (and may still have changed behavior) in #{options[:as]} inputs, use :default instead and check your form behavior")
+          options[:default] = options[:selected]
+          options.delete(:selected)
+        end
+        
         options = set_include_blank(options)
-        html_options[:multiple] = html_options[:multiple] || options.delete(:multiple)
-        html_options.delete(:multiple) if html_options[:multiple].nil?
+        html_options = options.delete(:input_html) || {}
 
         reflection = self.reflection_for(method)
+        
         if reflection && [ :has_many, :has_and_belongs_to_many ].include?(reflection.macro)
-          options[:include_blank]   = false
-          html_options[:multiple] = true if html_options[:multiple].nil?
-          html_options[:size]     ||= 5
+          options[:include_blank] = false
+          html_options[:multiple] ||= true
+          html_options[:size] ||= 5
         end
+        
+        # Value on the object trumps :default
+        if @object && @object.respond_to?(method) && @object.send(method)
+          if reflection && reflection.macro == :belongs_to
+            options[:default] = @object.send(method).id
+          else
+            options[:default] = @object.send(method)
+          end
+        end
+        
+        options[:selected] = options.delete(:default)
         options[:selected] = options[:selected].first if options[:selected].present? && html_options[:multiple] == false
+        
         input_name = generate_association_input_name(method)
 
         select_html = if options[:group_by]
@@ -1621,8 +1638,14 @@ module Formtastic #:nodoc:
       end
 
       def set_include_blank(options)
-        unless options.key?(:include_blank) || options.key?(:prompt)
-          options[:include_blank] = @@include_blank_for_select_by_default
+        if options[:multiple]
+          options[:include_blank] = false
+        else
+          if options.key?(:prompt)
+            options[:include_blank] = options.delete(:prompt)
+          else
+            options[:include_blank] = include_blank_for_select_by_default unless options.key?(:include_blank)
+          end
         end
         options
       end

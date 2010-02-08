@@ -134,10 +134,6 @@ describe 'select input' do
       end
     end
 
-    it 'should have one option with a "selected" attribute' do
-      output_buffer.should have_tag('form li select option[@selected]', :count => 1)
-    end
-
     it 'should not singularize the association name' do
       @new_post.stub!(:author_status).and_return(@bob)
       @new_post.stub!(:author_status_id).and_return(@bob.id)
@@ -255,9 +251,6 @@ describe 'select input' do
       output_buffer.should_not have_tag("form li select option[@value='']")
     end
 
-    it 'should have one option with a "selected" attribute' do
-      output_buffer.should have_tag('form li select option[@selected]', :count => 1)
-    end
   end
 
   describe 'for a has_and_belongs_to_many association' do
@@ -295,9 +288,6 @@ describe 'select input' do
       output_buffer.should_not have_tag("form li select option[@value='']")
     end
 
-    it 'should have one option with a "selected" attribute' do
-      output_buffer.should have_tag('form li select option[@selected]', :count => 1)
-    end
   end
   
   describe 'when :prompt => "choose something" is set' do
@@ -341,100 +331,6 @@ describe 'select input' do
     end
   end
 
-  describe ':selected option' do
-    before do
-      @output_buffer = ''
-    end
-
-    describe "nil" do
-      
-      describe "and the attribute is also nil" do
-      
-        before do
-          @new_post.stub!(:author).and_return(nil)
-          semantic_form_for(@new_post) do |builder|
-            concat(builder.input(:author, :as => :select, :selected => nil))
-          end
-        end
-        
-        it 'should not have any selected item(s)' do
-          output_buffer.should_not have_tag("form li select option[@selected='selected']")
-        end
-        
-      end
-      
-      describe "and the attribute has a value" do
-      
-        before do
-          @new_post.stub!(:author).and_return(@bob)
-          semantic_form_for(@new_post) do |builder|
-            concat(builder.input(:author, :as => :select, :selected => nil))
-          end
-        end
-        
-        it 'should not have any selected item(s) - nil means don\'t select anything' do
-          output_buffer.should_not have_tag("form li select option[@selected='selected']")
-        end
-        
-      end
-      
-    end
-
-    describe "single value" do
-      before do
-        @new_post.stub!(:author_id).and_return(nil)
-        semantic_form_for(@new_post) do |builder|
-          concat(builder.input(:author, :as => :select, :selected => @bob.id))
-        end
-      end
-
-      it 'should select the option with the same value' do
-        output_buffer.should have_tag("form li select option[@selected='selected']", :count => 1)
-        output_buffer.should have_tag("form li select option[@selected='selected']", /bob/i)
-        output_buffer.should have_tag("form li select option[@selected='selected'][@value='#{@bob.id}']")
-      end
-    end
-
-    describe "array of values" do
-
-      describe "with :multiple => false" do
-        before do
-          @new_post.stub!(:author_ids).and_return(nil)
-          
-          semantic_form_for(@new_post) do |builder|
-            concat(builder.input(:authors, :as => :select, :selected => [@bob.id, @fred.id], :multiple => false))
-          end
-        end
-
-        it "should only select the first value" do
-          output_buffer.should have_tag("form li select option[@selected='selected']", :count => 1)
-          output_buffer.should have_tag("form li select:not([@multiple]) option[@selected='selected']", /bob/i)
-          output_buffer.should have_tag("form li select:not([@multiple]) option[@selected='selected'][@value='#{@bob.id}']")
-        end
-      end
-
-      describe "with :multiple => true" do
-        before do
-          @new_post.stub!(:author_ids).and_return(nil)
-
-          semantic_form_for(@new_post) do |builder|
-            concat(builder.input(:authors, :as => :select, :selected => [@bob.id, @fred.id]))
-          end
-        end
-
-        it "should have multiple items selected; the specified ones" do
-          output_buffer.should have_tag("form li select option[@selected='selected']", :count => 2)
-          output_buffer.should have_tag("form li select[@multiple] option[@selected='selected']", /bob/i)
-          output_buffer.should have_tag("form li select[@multiple] option[@selected='selected'][@value='#{@bob.id}']")
-          output_buffer.should have_tag("form li select[@multiple] option[@selected='selected']", /fred/i)
-          output_buffer.should have_tag("form li select[@multiple] option[@selected='selected'][@value='#{@fred.id}']")
-        end
-      end
-
-    end
-
-  end
-
   describe "enum" do
     before do
       @output_buffer = ''
@@ -473,5 +369,56 @@ describe 'select input' do
       end
     end
   end
-
+  
+  describe ':default option' do
+    
+    describe "when the object has a value" do
+      it "should select the object value (ignoring :default)" do
+        output_buffer.replace ''
+        @new_post.stub!(:author_id => @bob.id, :author => @bob)
+        semantic_form_for(@new_post) do |builder|
+          concat(builder.input(:author, :as => :select, :default => @fred.id))
+        end
+        output_buffer.should have_tag("form li select#post_author_id option[@selected]", :count => 1)
+        output_buffer.should have_tag("form li select#post_author_id option[@value='#{@bob.id}'][@selected]", :count => 1)
+      end
+    end
+    
+    describe 'when the object has no value' do
+      before do
+        @new_post.stub!(:author_id => nil, :author => nil)
+      end
+      
+      it "should select the :default if provided" do
+        output_buffer.replace ''
+        semantic_form_for(@new_post) do |builder|
+          concat(builder.input(:author, :as => :select, :default => @fred.id))
+        end
+        output_buffer.should have_tag("form li select#post_author_id option[@selected]", :count => 1)
+        output_buffer.should have_tag("form li select#post_author_id option[@value='#{@fred.id}'][@selected]", :count => 1)
+      end
+      
+      it "should not select an option if the :default is provided as nil" do
+        output_buffer.replace ''
+        semantic_form_for(@new_post) do |builder|
+          concat(builder.input(:author_id, :as => :select, :default => nil))
+        end
+        output_buffer.should_not have_tag("form li ol li select#post_created_at_1i option[@selected]")
+      end
+    end
+    
+  end
+  
+  it 'should warn about :selected deprecation' do
+    with_deprecation_silenced do
+      ::ActiveSupport::Deprecation.should_receive(:warn)
+      semantic_form_for(@new_post) do |builder|
+        concat(builder.input(:author_id, :as => :select, :selected => @bob.id))
+      end
+    end
+  end
+  
+  
+  
+  
 end
