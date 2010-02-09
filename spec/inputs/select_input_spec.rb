@@ -403,7 +403,7 @@ describe 'select input' do
         semantic_form_for(@new_post) do |builder|
           concat(builder.input(:author_id, :as => :select, :default => nil))
         end
-        output_buffer.should_not have_tag("form li ol li select#post_created_at_1i option[@selected]")
+        output_buffer.should_not have_tag("form li ol li select option[@selected]")
       end
     end
     
@@ -417,8 +417,5 @@ describe 'select input' do
       end
     end
   end
-  
-  
-  
   
 end
