@@ -844,23 +844,38 @@ module Formtastic #:nodoc:
       # applying specific CSS or Javascript to a particular radio button).
       #
       def radio_input(method, options)
+        if options.key?(:selected) || options.key?(:checked)
+          ::ActiveSupport::Deprecation.warn(":selected and :checked are deprecated (and may still have changed behavior) in #{options[:as]} inputs, use :default instead and check your form behavior")
+          options[:default] = options.key?(:selected) ? options[:selected] : options[:checked]
+          options.delete(:selected)
+          options.delete(:checked)
+        end
+        
         collection   = find_collection_for_column(method, options)
         html_options = strip_formtastic_options(options).merge(options.delete(:input_html) || {})
+        
+        # Value on the object trumps :default
+        if @object && @object.respond_to?(method) && @object.send(method)
+          reflection = self.reflection_for(method)
+          if reflection && reflection.macro == :belongs_to
+            options[:default] = @object.send(method).id
+          else
+            options[:default] = @object.send(method)
+          end
+        end
 
         input_name = generate_association_input_name(method)
         value_as_class = options.delete(:value_as_class)
         input_ids = []
-        selected_option_is_present = [:selected, :checked].any? { |k| options.key?(k) }
-        selected_value = (options.key?(:checked) ? options[:checked] : options[:selected]) if selected_option_is_present
-
+        
         list_item_content = collection.map do |c|
           label = c.is_a?(Array) ? c.first : c
           value = c.is_a?(Array) ? c.last  : c
           input_id = generate_html_id(input_name, value.to_s.gsub(/\s/, '_').gsub(/\W/, '').downcase)
           input_ids << input_id
-
-          html_options[:checked] = selected_value == value if selected_option_is_present
-
+          
+          html_options[:checked] = (options[:default] == value) if options[:default]
+                    
           li_content = template.content_tag(:label,
             "#{self.radio_button(input_name, value, html_options)} #{label}",
             :for => input_id

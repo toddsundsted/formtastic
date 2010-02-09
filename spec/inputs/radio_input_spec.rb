@@ -34,10 +34,6 @@ describe 'radio input' do
       output_buffer.should have_tag('form li fieldset ol li', :count => ::Author.find(:all).size)
     end
 
-    it 'should have one option with a "checked" attribute' do
-      output_buffer.should have_tag('form li input[@checked]', :count => 1)
-    end
-
     describe "each choice" do
 
       it 'should contain a label for the radio input with a nested input and label text' do
@@ -63,6 +59,7 @@ describe 'radio input' do
       end
 
       it "should mark input as checked if it's the the existing choice" do
+        output_buffer.replace ''
         @new_post.author_id.should == @bob.id
         @new_post.author.id.should == @bob.id
         @new_post.author.should == @bob
@@ -109,41 +106,108 @@ describe 'radio input' do
     end
   end
 
-  describe 'when :selected is set' do
-    before do
-      @output_buffer = ''
-    end
-
-    describe "no selected items" do
-      before do
-        @new_post.stub!(:author_ids).and_return(nil)
-
+  #describe 'when :selected is set' do
+  #  before do
+  #    @output_buffer = ''
+  #  end
+  #
+  #  describe "no selected items" do
+  #    before do
+  #      @new_post.stub!(:author_ids).and_return(nil)
+  #
+  #      semantic_form_for(@new_post) do |builder|
+  #        concat(builder.input(:authors, :as => :radio, :selected => nil))
+  #      end
+  #    end
+  #
+  #    it 'should not have any selected item(s)' do
+  #      output_buffer.should_not have_tag("form li fieldset ol li label input[@checked='checked']")
+  #    end
+  #  end
+  #
+  #  describe "single selected item" do
+  #    before do
+  #      @new_post.stub!(:author_ids).and_return(nil)
+  #
+  #      semantic_form_for(@new_post) do |builder|
+  #        concat(builder.input(:authors, :as => :radio, :selected => @fred.id))
+  #      end
+  #    end
+  #
+  #    it "should have one item selected; the specified one" do
+  #      output_buffer.should have_tag("form li fieldset ol li label input[@type='radio'][@checked='checked']", :count => 1)
+  #      output_buffer.should have_tag("form li fieldset ol li label[@for='post_author_ids_#{@fred.id}']", /fred/i)
+  #      output_buffer.should have_tag("form li fieldset ol li label input[@type='radio'][@checked='checked'][@value='#{@fred.id}']")
+  #    end
+  #  end
+  #
+  #end
+  #
+  describe ':default option' do
+    
+    describe "when the object has a value" do
+      it "should select the object value (ignoring :default)" do
+        output_buffer.replace ''
+        @new_post.stub!(:author_id => @bob.id, :author => @bob)
         semantic_form_for(@new_post) do |builder|
-          concat(builder.input(:authors, :as => :radio, :selected => nil))
+          concat(builder.input(:author, :as => :radio, :default => @fred.id))
         end
-      end
-
-      it 'should not have any selected item(s)' do
-        output_buffer.should_not have_tag("form li fieldset ol li label input[@checked='checked']")
+        output_buffer.should have_tag("form li input[@checked]", :count => 1)
+        output_buffer.should have_tag("form li input#post_author_id_#{@bob.id}[@checked]", :count => 1)
       end
     end
-
-    describe "single selected item" do
+    
+    describe 'when the object has no value' do
       before do
-        @new_post.stub!(:author_ids).and_return(nil)
-  
-        semantic_form_for(@new_post) do |builder|
-          concat(builder.input(:authors, :as => :radio, :selected => @fred.id))
-        end
+        @new_post.stub!(:author_id => nil, :author => nil)
       end
-
-      it "should have one item selected; the specified one" do
-        output_buffer.should have_tag("form li fieldset ol li label input[@type='radio'][@checked='checked']", :count => 1)
-        output_buffer.should have_tag("form li fieldset ol li label[@for='post_author_ids_#{@fred.id}']", /fred/i)
-        output_buffer.should have_tag("form li fieldset ol li label input[@type='radio'][@checked='checked'][@value='#{@fred.id}']")
+      
+      it "should select the :default if provided" do
+        output_buffer.replace ''
+        semantic_form_for(@new_post) do |builder|
+          concat(builder.input(:author, :as => :radio, :default => @fred.id))
+        end
+        output_buffer.should have_tag("form li input[@checked]", :count => 1)
+        output_buffer.should have_tag("form li input#post_author_id_#{@fred.id}[@checked]", :count => 1)
+      end
+      
+      it "should not select an option if the :default is provided as nil" do
+        output_buffer.replace ''
+        semantic_form_for(@new_post) do |builder|
+          concat(builder.input(:author_id, :as => :radio, :default => nil))
+        end
+        output_buffer.should_not have_tag("form li ol li input#post_created_at_1i option[@checked]")
       end
     end
-
+    
+    it 'should strip the :default and :selected options from the HTML' do
+      output_buffer.replace ''
+      semantic_form_for(@new_post) do |builder|
+        concat(builder.input(:author_id, :as => :radio, :default => nil))
+      end
+      output_buffer.should_not =~ /selected/
+      output_buffer.should_not =~ /default/
+    end
+    
   end
-
+  
+  it 'should warn about :selected deprecation' do
+    with_deprecation_silenced do
+      ::ActiveSupport::Deprecation.should_receive(:warn)
+      semantic_form_for(@new_post) do |builder|
+        concat(builder.input(:author_id, :as => :radio, :selected => @bob.id))
+      end
+    end
+  end
+  
+  it 'should warn about :checked deprecation' do
+    with_deprecation_silenced do
+      ::ActiveSupport::Deprecation.should_receive(:warn)
+      semantic_form_for(@new_post) do |builder|
+        concat(builder.input(:author_id, :as => :radio, :checked => @bob.id))
+      end
+    end
+  end
+  
+  
 end
