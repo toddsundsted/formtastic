@@ -832,12 +832,11 @@ module Formtastic #:nodoc:
       #   f.input :author, :as => :radio, :value_method => :login
       #   f.input :author, :as => :radio, :value_method => Proc.new { |a| "author_#{a.login}" }
       #
-      # You can force a particular radio button in the collection to be checked with the :selected option.
+      # If the model doesn't already have a value, you can pre-select a default value with the 
+      # :default option.  Examples:
       #
-      # Examples:
-      #
-      #   f.input :subscribe_to_newsletter, :as => :radio, :selected => true
-      #   f.input :subscribe_to_newsletter, :as => :radio, :collection => ["Yeah!", "Nope!"], :selected => "Nope!"
+      #   f.input :subscribe_to_newsletter, :as => :radio, :default => true
+      #   f.input :subscribe_to_newsletter, :as => :radio, :collection => ["Yeah!", "Nope!"], :default => "Nope!"
       #
       # Finally, you can set :value_as_class => true if you want the li wrapper around each radio
       # button / label combination to contain a class with the value of the radio button (useful for
