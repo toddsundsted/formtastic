@@ -666,14 +666,14 @@ module Formtastic #:nodoc:
       #   f.input :author, :value_method => :login
       #   f.input :author, :value_method => Proc.new { |a| "author_#{a.login}" }
       #
-      # You can pre-select a specific option value by passing in the :selected option.
+      # If the model doesn't already have a value, you can pre-select a specific option value by 
+      # passing in the :default option.
       #
       # Examples:
       #
-      #   f.input :author, :selected => current_user.id
-      #   f.input :author, :value_method => :login, :selected => current_user.login
-      #   f.input :authors, :value_method => :login, :selected => Author.most_popular.collect(&:id)
-      #   f.input :authors, :value_method => :login, :selected => nil   # override any defaults: select none
+      #   f.input :author, :default => current_user.id
+      #   f.input :author, :value_method => :login, :default => current_user.login
+      #   f.input :authors, :value_method => :login, :default => Author.most_popular.collect(&:id)
       #
       # You can pass html_options to the select tag using :input_html => {}
       #
