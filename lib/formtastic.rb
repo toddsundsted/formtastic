@@ -1184,16 +1184,26 @@ module Formtastic #:nodoc:
       # to the column name (method name) and can be altered with the :label option.
       # :checked_value and :unchecked_value options are also available.
       #
-      # You can pre-select/check the boolean checkbox by passing in the :selected option (alias :checked works as well).
+      # If the model doesn't already have a value, you can specify that the checked box should 
+      # checked by default :default option (aliased to :checked too). Examples:
       #
-      # Examples:
-      #
-      #   f.input :allow_comments, :as => :boolean, :selected => true   # override any default value: selected/checked
-      #
+      #   f.input :allow_comments, :as => :boolean, :default => true
+      #   f.input :allow_comments, :as => :boolean, :checked => true
       def boolean_input(method, options)
+        if options.key?(:selected)
+          ::ActiveSupport::Deprecation.warn(":selected is deprecated (and may still have changed behavior) in #{options[:as]} inputs, use :default or :checked instead")
+        end
+        
         html_options = options.delete(:input_html) || {}
-        checked = options.key?(:checked) ? options[:checked] : options[:selected]
-        html_options[:checked] = checked == true if [:selected, :checked].any? { |k| options.key?(k) }
+        
+        default_option_key = [:default, :checked, :selected].detect {|key| options.key?(key) }
+        default = options.delete(default_option_key)
+        
+        if @object && @object.respond_to?(method) && !@object.send(method).nil?
+          html_options[:checked] = @object.send(method)
+        else
+          html_options[:checked] = (default == true)
+        end
 
         input = self.check_box(method, strip_formtastic_options(options).merge(html_options),
                                options.delete(:checked_value) || '1', options.delete(:unchecked_value) || '0')

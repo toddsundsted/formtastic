@@ -56,38 +56,139 @@ describe 'boolean input' do
     output_buffer.should have_tag('form li label input[@name="project[allow_comments]"]')
   end
 
-  describe 'when :selected is set' do
+  describe 'when :default is provided' do
     before do
       @output_buffer = ''
     end
-
-    describe "not selected" do
-      before do
-        @new_post.stub!(:allow_comments).and_return(true)
-
+    
+    describe "and the model already has a value" do
+      
+      it "should use the model's value, ignoring the :default" do
+        output_buffer.replace ''
+        @new_post.stub!(:allow_comments).and_return(false)
         semantic_form_for(@new_post) do |builder|
-          concat(builder.input(:allow_comments, :as => :boolean, :selected => false))
+          concat(builder.input(:allow_comments, :as => :boolean, :default => true))
         end
+        output_buffer.should_not have_tag("input[@checked]")
       end
-
-      it 'should not be selected' do
-        output_buffer.should_not have_tag("form li label input[@type='checkbox'][@checked='checked']")
+      
+    end
+    
+    describe "and the model does not have a value" do
+      
+      it "should check the box if true" do
+        output_buffer.replace ''
+        @new_post.stub!(:allow_comments).and_return(nil)
+        semantic_form_for(@new_post) do |builder|
+          concat(builder.input(:allow_comments, :as => :boolean, :default => true))
+        end
+        output_buffer.should have_tag("input[@checked]")
       end
+      
+      it "should uncheck the box if false" do
+        output_buffer.replace ''
+        @new_post.stub!(:allow_comments).and_return(nil)
+        semantic_form_for(@new_post) do |builder|
+          concat(builder.input(:allow_comments, :as => :boolean, :default => false))
+        end
+        output_buffer.should_not have_tag("input[@checked]")
+      end
+      
     end
 
-    describe "selected" do
-      before do
+  end
+  
+  describe 'when :checked is provided (alias of :default)' do
+    
+    describe "and the model already has a value" do
+      
+      it "should use the model's value, ignoring the :default" do
+        output_buffer.replace ''
         @new_post.stub!(:allow_comments).and_return(false)
-
         semantic_form_for(@new_post) do |builder|
-          concat(builder.input(:allow_comments, :as => :boolean, :selected => true))
+          concat(builder.input(:allow_comments, :as => :boolean, :checked => true))
+        end
+        output_buffer.should_not have_tag("input[@checked]")
+      end
+      
+    end
+    
+    describe "and the model does not have a value" do
+      
+      it "should check the box if true" do
+        output_buffer.replace ''
+        @new_post.stub!(:allow_comments).and_return(nil)
+        semantic_form_for(@new_post) do |builder|
+          concat(builder.input(:allow_comments, :as => :boolean, :checked => true))
+        end
+        output_buffer.should have_tag("input[@checked]")
+      end
+      
+      it "should uncheck the box if false" do
+        output_buffer.replace ''
+        @new_post.stub!(:allow_comments).and_return(nil)
+        semantic_form_for(@new_post) do |builder|
+          concat(builder.input(:allow_comments, :as => :boolean, :checked => false))
+        end
+        output_buffer.should_not have_tag("input[@checked]")
+      end
+      
+    end
+
+  end
+    
+  describe 'when :selected is provided (deprecated alias of :default)' do
+  
+    describe "and the model already has a value" do
+      
+      it "should use the model's value, ignoring the :default" do
+        with_deprecation_silenced do
+          output_buffer.replace ''
+          @new_post.stub!(:allow_comments).and_return(false)
+          semantic_form_for(@new_post) do |builder|
+            concat(builder.input(:allow_comments, :as => :boolean, :selected => true))
+          end
+          output_buffer.should_not have_tag("input[@checked]")
         end
       end
-
-      it 'should be selected' do
-        output_buffer.should have_tag("form li label input[@type='checkbox'][@checked='checked']")
+      
+    end
+    
+    describe "and the model does not have a value" do
+    
+      it "should check the box if true" do
+        with_deprecation_silenced do
+          output_buffer.replace ''
+          @new_post.stub!(:allow_comments).and_return(nil)
+          semantic_form_for(@new_post) do |builder|
+            concat(builder.input(:allow_comments, :as => :boolean, :selected => true))
+          end
+          output_buffer.should have_tag("input[@checked]")
+        end
+      end
+    
+      it "should uncheck the box if false" do
+        with_deprecation_silenced do 
+          output_buffer.replace ''
+          @new_post.stub!(:allow_comments).and_return(nil)
+          semantic_form_for(@new_post) do |builder|
+            concat(builder.input(:allow_comments, :as => :boolean, :selected => false))
+          end
+          output_buffer.should_not have_tag("input[@checked]")
+        end
+      end
+    
+    end
+    
+  end
+  
+  it 'should warn about :selected deprecation' do
+    with_deprecation_silenced do
+      ::ActiveSupport::Deprecation.should_receive(:warn)
+      semantic_form_for(@new_post) do |builder|
+        concat(builder.input(:allow_comments, :as => :boolean, :selected => @bob.id))
       end
     end
   end
-
+  
 end
