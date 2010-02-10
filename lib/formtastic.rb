@@ -762,18 +762,24 @@ module Formtastic #:nodoc:
       #
       #   f.input :time_zone, :as => :time_zone, :priority_zones => /Australia/
       #
-      # You can pre-select a specific option value by passing in the :selected option.
-      # Note: Right now only works if the form object attribute value is not set (nil),
-      # because of how the core helper is implemented.
+      # If the model doesn't already have a value, you can pre-select a default value with the
+      # :default option. Example:
       #
-      # Examples:
-      #
-      #   f.input :my_favorite_time_zone, :as => :time_zone, :selected => 'Singapore'
+      #   f.input :my_favorite_time_zone, :as => :time_zone, :default => 'Singapore'
       #
       def time_zone_input(method, options)
+        if options.key?(:selected)
+          ::ActiveSupport::Deprecation.warn(":selected is deprecated (and may still have changed behavior) in #{options[:as]} inputs, use :default instead and check your form behavior")
+          options[:default] = options[:selected]
+          options.delete(:selected)
+        end
+        
         html_options = options.delete(:input_html) || {}
-        selected_value = options.delete(:selected)
-
+        
+        selected_value = (@object && @object.respond_to?(method) && !@object.send(method).blank?) ?
+          @object.send(method) :
+          options.delete(:default)
+          
         self.label(method, options_for_label(options)) <<
         self.time_zone_select(method, options.delete(:priority_zones),
           strip_formtastic_options(options).merge(:default => selected_value), html_options)

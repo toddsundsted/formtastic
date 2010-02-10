@@ -57,46 +57,51 @@ describe 'time_zone input' do
     end
   end
   
-  describe 'when :selected is set' do
+  describe 'when :default is set' do
     before do
-      @output_buffer = ''
+      output_buffer.replace ''
     end
-
-    # Note: Not possible to override default selected value for time_zone input
-    # without overriding Rails time_zone_select. This Rails helper works "a bit different". =/
-    #
-    # describe "no selected items" do
-    #   before do
-    #     @new_post.stub!(:time_zone).and_return('Stockholm')
-    # 
-    #     semantic_form_for(@new_post) do |builder|
-    #       concat(builder.input(:time_zone, :as => :time_zone, :selected => nil))
-    #     end
-    #   end
-    # 
-    #   it 'should not have any selected item(s)' do
-    #     output_buffer.should_not have_tag("form li select option[@selected='selected']")
-    #   end
-    # end
-
-    describe "single selected item" do
-      before do
-        # Note: See above...only works for the "attribute is nil" case.
-        # @new_post.stub!(:time_zone).and_return('Stockholm')
-        @new_post.stub!(:time_zone).and_return(nil)
-
+    
+    describe 'when the object has a value' do
+      
+      it 'should use the object\'s value, ignoring the :default' do
+        @new_post.stub!(:time_zone).and_return('Auckland')
         semantic_form_for(@new_post) do |builder|
-          concat(builder.input(:time_zone, :as => :time_zone, :selected => 'Melbourne'))
+          concat(builder.input(:time_zone, :as => :time_zone, :default => 'Melbourne'))
         end
+        
+        output_buffer.should have_tag("form li select option[@selected='selected']", :count => 1)
+        output_buffer.should have_tag("form li select option[@selected='selected']", /Auckland/i)
+        output_buffer.should have_tag("form li select option[@selected='selected'][@value='Auckland']")
       end
+      
+    end
+    
+    describe 'when the object has no value' do
+      
+      it 'should pre-select the :default value' do
+        @new_post.stub!(:time_zone).and_return(nil)
+        semantic_form_for(@new_post) do |builder|
+          concat(builder.input(:time_zone, :as => :time_zone, :default => 'Melbourne'))
+        end
 
-      it 'should have a selected item; the specified one' do
         output_buffer.should have_tag("form li select option[@selected='selected']", :count => 1)
         output_buffer.should have_tag("form li select option[@selected='selected']", /Melbourne/i)
         output_buffer.should have_tag("form li select option[@selected='selected'][@value='Melbourne']")
       end
+      
     end
-
+    
   end
-
+  
+  it 'should warn about :selected deprecation' do
+    with_deprecation_silenced do
+      ::ActiveSupport::Deprecation.should_receive(:warn)
+      @new_post.stub!(:time_zone).and_return(nil)
+      semantic_form_for(@new_post) do |builder|
+        concat(builder.input(:time_zone, :as => :time_zone, :selected => 'Melbourne'))
+      end
+    end
+  end
+  
 end
