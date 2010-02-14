@@ -890,7 +890,7 @@ module Formtastic #:nodoc:
           template.content_tag(:li, li_content, li_options)
         end
 
-        field_set_and_list_wrapping_for_method(method, options.merge(:label_for => input_ids.first), list_item_content)
+        field_set_and_list_wrapping_for_method(method, options, list_item_content)
       end
       alias :boolean_radio_input :radio_input
 
@@ -1139,7 +1139,7 @@ module Formtastic #:nodoc:
           template.content_tag(:li, li_content, li_options)
         end
 
-        field_set_and_list_wrapping_for_method(method, options.merge(:label_for => input_ids.first), list_item_content)
+        field_set_and_list_wrapping_for_method(method, options, list_item_content)
       end
 
       # Outputs a country select input, wrapping around a regular country_select helper.
