@@ -101,7 +101,7 @@ form.formtastic fieldset ol li.text textarea { width:74%; }
 
 /* HIDDEN OVERRIDES
 --------------------------------------------------------------------------------------------------*/
-form.formtastic fieldset ol li.hidden { display:none; }
+form.formtastic fieldset ol li.hidden { display:none ! important; }
 
 
 /* BOOLEAN OVERRIDES
